@@ -1,0 +1,176 @@
+description: multi-radar distributed imaging, table test
+num_trigger:    200   # frames
+period_frame:   10   # ms
+radar_timeout:  5     # s
+saving_root_dir: ./adcData/
+flag_visualize: True
+flag_save: False
+wait_for_threads: False
+
+chirp_cfg:
+  num_frame:  1
+  num_chirp:  1
+  num_config: 6
+  num_adc:    256
+  num_ch:     4
+
+activated_radar:
+  - idx: 0
+    name: middle
+    mono_chirp_idx: [0,1]
+    client_name: slave_5
+    pose: [0.7285, 0.3531, 135.3847]  # x, y, yaw (only considering 2D pose)
+    cmap: Reds
+    alpha: 0.5
+    from_record_file: ./adcData/eval_data/inthewild/table_video/20251205_034038/radar_0.bin
+    # from_record_file: ./adcData/20251112_145709/radar_0.bin
+  - idx: 1
+    name: left
+    mono_chirp_idx: [2,3]
+    client_name: slave_6
+    pose: [0.0, 0.0, 90]
+    # pose: [ -0.7520,   0.1989,  38.5609]
+    cmap: Greens
+    alpha: 0.5
+    from_record_file: ./adcData/eval_data/inthewild/table_video/20251205_034038/radar_1.bin
+    # from_record_file: ./adcData/20251112_145709/radar_1.bin
+  - idx: 2
+    name: right
+    mono_chirp_idx: [4,5]
+    client_name: slave_4
+    pose: [-0.6939, 0.2795, 44.5802]
+    # pose: [  0.7368,   0.4863, 155.6009]
+    cmap: Blues
+    alpha: 0.5
+    from_record_file: ./adcData/eval_data/inthewild/table_video/20251205_034038/radar_2.bin
+    # from_record_file: ./adcData/20251112_145709/radar_2.bin
+
+visual_cfg:
+  nfft_range: 512
+  nfft_angle: 63
+  max_range: 4.0 # m
+  
+ramp_cfg:
+  Fs: 2150000.0
+  adc_start_time: 7.0e-06
+  f0: 77010000000.0
+  idel_time: 50.0
+  num_adc: 256
+  ramp_time: 0.0001285
+  slope: 38816929000000.0
+  tx_start_time: 0.0
+# ramp_cfg:
+#   f0: 76.01E+9
+#   slope: 38.816929E+12
+#   ramp_time: 128.5E-6
+#   adc_start_time: 7.0E-6
+#   num_adc: 256
+#   Fs: 2.15E+6
+#   tx_start_time: 0.0
+#   idel_time: 15.0
+
+# static information 
+comm_cfg:
+  COMMAND_LENGTH:           100
+  DELIMITER:                "@$@$"
+  MASTER_ACK_WAIT_TIME:     0.01
+  MASTER_NO_ACK_CNT_MAX:    500
+  CLIENT_MSG_WAIT_TIME:     0.01
+  CLIENT_RECONNECTION_TIME: 10
+
+  master:
+    name: "XinghuaDesktop"
+    radar_name: "RH"
+    port_type: "tcpip"
+    IP: "192.168.50.83"
+    server_access_port: 5004
+
+  slave_1:
+    name: "DESKTOP-G40D8TJ"
+    radar_name: "RV"
+    port_type: "tcpip"
+    IP: "192.168.50.221"
+    server_access_port: 5001
+
+  slave_2:
+    name: "TheoLaptop"
+    radar_name: "LH"
+    port_type: "tcpip"
+    IP: "192.168.50.166"
+    server_access_port: 5002
+
+  slave_3:
+    name: "NEWTLAB_LAPTOP"
+    radar_name: "LV"
+    port_type: "tcpip"
+    IP: "192.168.50.47"
+    server_access_port: 5003
+
+  slave_4:
+    name: "NEWTLAB_LAPTOP_lp2"
+    radar_name: "radar0"
+    port_type: "tcpip"
+    IP: "192.168.50.56"
+    server_access_port: 5005
+
+  slave_5:
+    name: "NewtLabDell1"
+    radar_name: "radar1"
+    port_type: "tcpip"
+    IP: "192.168.50.108"
+    server_access_port: 5006
+
+  slave_6:
+    name: "NucBox_M6"
+    radar_name: "radar2"
+    port_type: "tcpip"
+    IP: "192.168.50.111"
+    server_access_port: 5007
+
+  motor:
+    name: "arduino_uno"
+    port_type: "serial"
+    serial_port: "COM3"
+    baud_rate: 9600
+    stepper_ratio: 200
+    timeout: 60
+
+  trigger:
+    name: "raspberrypi"
+    port_type: "tcpip"
+    IP: "192.168.50.155"
+    server_access_port: 5000
+    greeting: "hello from server!"
+
+radar_id:
+  0: 
+    idx: 0
+    name: "RV"
+    ip: "192.168.33.181"
+    mac: "12.34.56.78.91.00"
+    cfg_port: 4200
+    data_port: 4201
+
+  1:
+    idx: 1
+    name: "RH"
+    ip: "192.168.33.182"
+    mac: "12.34.56.78.91.01"
+    cfg_port: 4202
+    data_port: 4203
+
+  2:
+    idx: 2
+    name: "LS"
+    ip: "192.168.33.180"
+    mac: "12.34.56.78.91.02"
+    cfg_port: 4096
+    data_port: 4098
+
+  3:
+    idx: 3
+    name: "non"
+    ip: "192.168.33.184"
+    mac: "12.34.56.78.91.03"
+    cfg_port: 4206
+    data_port: 4207
