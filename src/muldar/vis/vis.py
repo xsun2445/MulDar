@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-import src.dsp.dsp as dsp
+import muldar.dsp.dsp as dsp
 import traceback
 
 ########################################Static Vis
@@ -21,7 +21,6 @@ def vis_beamforming(adcData, angle_range=[-90,90,181], nfft=512, doplot=True, ti
         plt.title(title)
 
     return temp_bf
-
 
 
 ########################################Dynamic Vis

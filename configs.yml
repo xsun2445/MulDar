@@ -22,7 +22,7 @@ activated_radar:
     pose: [0.7285, 0.3531, 135.3847]  # x, y, yaw (only considering 2D pose)
     cmap: Reds
     alpha: 0.5
-    from_record_file: ./adcData/eval_data/inthewild/table_video/20251205_034038/radar_0.bin
+    from_record_file: C:/Workspace/2025_polysight/mmWave_SAR_collection/adcData/eval_data/inthewild/table_video/20251205_034038/radar_0.bin
     # from_record_file: ./adcData/20251112_145709/radar_0.bin
   - idx: 1
     name: left
@@ -32,7 +32,7 @@ activated_radar:
     # pose: [ -0.7520,   0.1989,  38.5609]
     cmap: Greens
     alpha: 0.5
-    from_record_file: ./adcData/eval_data/inthewild/table_video/20251205_034038/radar_1.bin
+    from_record_file: C:/Workspace/2025_polysight/mmWave_SAR_collection/adcData/eval_data/inthewild/table_video/20251205_034038/radar_1.bin
     # from_record_file: ./adcData/20251112_145709/radar_1.bin
   - idx: 2
     name: right
@@ -42,7 +42,7 @@ activated_radar:
     # pose: [  0.7368,   0.4863, 155.6009]
     cmap: Blues
     alpha: 0.5
-    from_record_file: ./adcData/eval_data/inthewild/table_video/20251205_034038/radar_2.bin
+    from_record_file: C:/Workspace/2025_polysight/mmWave_SAR_collection/adcData/eval_data/inthewild/table_video/20251205_034038/radar_2.bin
     # from_record_file: ./adcData/20251112_145709/radar_2.bin
 
 visual_cfg:

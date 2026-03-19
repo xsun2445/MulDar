@@ -1,4 +1,14 @@
-# for multiple radar usecases
+"""
+Handling muldar radar trigger/retrigger and live data streaming
+
+Hardware triggering can cause MSS error and data loss hence need multiple mmWaveStudio 
+retriggering. The retriggering is done by sending a TCP message to the MATLAB studio on 
+each radar PC, which will then trigger the radar. The radar data is received in real-time 
+and can be saved to a file if needed. The MultiRadarManager class manages multiple 
+radars and handles the triggering and data collection process.
+
+The data source can also come from recorded raw data files
+"""
 
 import os
 import struct
@@ -9,7 +19,6 @@ import numpy as np
 
 import muldar.utils as utils
 from muldar.devices.radar import DCA1000, CMD, CMD_SUCCESS_CODE, MAX_PACKET_SIZE, FILLING_PACKET
-
 
 
 def send_to_matlab(matlab_ip, port, message):
@@ -69,7 +78,9 @@ def trigger_radar(num_frames: int,
 
 class DCA1000_realtime(DCA1000):
     """
-    Real-time radar data recording class. will continuously record data and update the data attribute.
+    Real-time radar data recording. will continuously record data and update the data attribute.
+    
+    Handles the binary -> numpy array conversion and reshaping. 
     """
     def __init__(self, radar_params):
         super().__init__(

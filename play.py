@@ -12,7 +12,7 @@ def main():
     import argparse
     from argparse import ArgumentParser, BooleanOptionalAction
     parser = ArgumentParser()
-    parser.add_argument('--config-path', type=str, default='configs/config_new.yml')
+    parser.add_argument('--config-path', type=str, default='configs.yml')
     parser.add_argument('--wait-for-threads', action=BooleanOptionalAction, default=argparse.SUPPRESS)
     parser.add_argument('--flag-save', action=BooleanOptionalAction, default=argparse.SUPPRESS)
     parser.add_argument('--flag-visualize', action=BooleanOptionalAction, default=argparse.SUPPRESS) # use --no-flag-visualize
@@ -22,6 +22,10 @@ def main():
     parser.add_argument('--saving-root-dir', type=str, default=argparse.SUPPRESS)
     parser.add_argument('--warmup', action=BooleanOptionalAction, default=argparse.SUPPRESS)
     args = parser.parse_args()
+
+    # args.config_path = 'C:/Workspace/2025_polysight/mmWave_SAR_collection/adcData/eval_data/inthewild/table_video/20251205_034038/configs.yml'
+
+
     params = yaml.load(open(args.config_path), Loader=yaml.FullLoader)
     params.update(args.__dict__)
     if params['flag_save'] and not params['flag_visualize']:
@@ -37,9 +41,6 @@ def main():
 
     # import time
     # time.sleep(6)
-
-    params['config_path'] = './adcData/eval_data/inthewild/table_video/20251205_034038/configs.yml'
-
 
     mgr = MultiRadarManager(params)
     mgr.start()

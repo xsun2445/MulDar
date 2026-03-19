@@ -19,6 +19,7 @@ def _antenna_positions():
 
 def __antenna_positions():
     """The default antenna positions for the AWR2243 on radar coordinate system
+    find visualization in ./hardware/antenna.ipynb
     """
     d = 1.9e-3
     return np.array([
@@ -104,6 +105,10 @@ def readDCA1000fromBuffer(buffer):
 
 
 def readDCA1000Robust(fileName, adc_shape):
+    """
+    work for incomplete files, reshape the data based on the adc_shape and discard the extra data
+    adc_shape: dict with keys 'num_ch', 'num_chirp', 'num_config', 'num_adc'
+    """
     adcData = readDCA1000(fileName)
     num_bytes = adcData.shape[1]
     frame_bytes = adc_shape['num_config'] * adc_shape['num_adc']

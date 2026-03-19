@@ -9,7 +9,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-# Modifications: adapted for mmWave_SAR_collection; Copyright (c) 2025 Polysight
+# Modifications: adapted for MulDar; Copyright (c) 2026 MulDar
 # SPDX-License-Identifier: Apache-2.0
 
 import codecs
@@ -304,14 +304,18 @@ class DCA1000:
             print("no mmWavestudio spy control")
 
     @staticmethod
-    def config_eeprom(dca_ip='192.168.33.180',
+    def config_eeprom(
+                # original address
+                dca_ip='192.168.33.180',
                 dca_port=4096,
                 system_ip='192.168.33.30',
+                # below are targer address
                 DCA1000IPAddress='192.168.33.180',
                 DCA1000MACAdress='12.34.56.78.90.12',
                 DCA1000ConfigPort=4096, 
                 DCA1000DataPort=4098,
-                systemIPAdress='192.168.33.30'):
+                systemIPAdress='192.168.33.30'
+                ):
         # dca_ip and system_ip are for connection, the following information are for editing the eeprom
         # 0400
         cmd_code = CMD.CONFIG_EEPROM_CMD_CODE

@@ -1,6 +1,14 @@
 # MulDar
 
-Multi-monostatic radar data acquisition, processing, and real-time visualization.
+Multi-static COTS radar implementation with TI AWR2243/1243BOOST
+
+## Hardware
+
+TI AWR2243/1243BOOST, DCA1000EVM
+
+![MulDar System](assets/muldar_sys.png)
+
+
 
 ## Installation
 
@@ -17,6 +25,9 @@ Multi-monostatic radar data acquisition, processing, and real-time visualization
 ```bash
 uv sync
 ```
+
+
+
 
 This creates a virtual environment and installs all dependencies in one step. (Note: cupy may take longer time for installation)
 <!-- 
@@ -37,7 +48,7 @@ pip install -e .
 ## Usage
 
 ```bash
-python realtime_vis.py --config-path configs/config_new.yml
+python play.py --config-path configs/config_new.yml
 ```
 
 ### Command-line options
@@ -61,4 +72,13 @@ Requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-nat
 ```bash
 docker build -t muldar .
 docker run --gpus all muldar --config-path configs/config_new.yml
+```
+
+
+## Cite
+
+Consider cite our mobisys paper!
+
+```tex
+coming soon.
 ```
