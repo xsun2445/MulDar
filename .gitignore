@@ -1,5 +1,6 @@
 # Virtual environments
 .venv/
+.cache/
 
 # Python
 __pycache__/
@@ -18,3 +19,12 @@ Thumbs.db
 
 # code
 old_code/
+
+# data
+adcData/
+adcData_prev/
+evaluations/chamfer/img_results/
+evaluations/chamfer/chamfer_results/
+evaluations/car/out/
+evaluations/common_objects/images/
+.gitattributes

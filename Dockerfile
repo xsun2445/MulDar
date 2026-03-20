@@ -15,4 +15,4 @@ RUN uv sync --frozen --no-dev
 
 COPY . .
 
-ENTRYPOINT ["uv", "run", "python3", "realtime_vis.py"]
+CMD ["bash"]

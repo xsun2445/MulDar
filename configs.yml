@@ -59,15 +59,6 @@ ramp_cfg:
   ramp_time: 0.0001285
   slope: 38816929000000.0
   tx_start_time: 0.0
-# ramp_cfg:
-#   f0: 76.01E+9
-#   slope: 38.816929E+12
-#   ramp_time: 128.5E-6
-#   adc_start_time: 7.0E-6
-#   num_adc: 256
-#   Fs: 2.15E+6
-#   tx_start_time: 0.0
-#   idel_time: 15.0
 
 # static information 
 comm_cfg:
@@ -79,32 +70,11 @@ comm_cfg:
   CLIENT_RECONNECTION_TIME: 10
 
   master:
-    name: "XinghuaDesktop"
+    name: "MASTERNAME"
     radar_name: "RH"
     port_type: "tcpip"
     IP: "192.168.50.83"
     server_access_port: 5004
-
-  slave_1:
-    name: "DESKTOP-G40D8TJ"
-    radar_name: "RV"
-    port_type: "tcpip"
-    IP: "192.168.50.221"
-    server_access_port: 5001
-
-  slave_2:
-    name: "TheoLaptop"
-    radar_name: "LH"
-    port_type: "tcpip"
-    IP: "192.168.50.166"
-    server_access_port: 5002
-
-  slave_3:
-    name: "NEWTLAB_LAPTOP"
-    radar_name: "LV"
-    port_type: "tcpip"
-    IP: "192.168.50.47"
-    server_access_port: 5003
 
   slave_4:
     name: "NEWTLAB_LAPTOP_lp2"
@@ -127,20 +97,20 @@ comm_cfg:
     IP: "192.168.50.111"
     server_access_port: 5007
 
-  motor:
-    name: "arduino_uno"
-    port_type: "serial"
-    serial_port: "COM3"
-    baud_rate: 9600
-    stepper_ratio: 200
-    timeout: 60
-
   trigger:
     name: "raspberrypi"
     port_type: "tcpip"
     IP: "192.168.50.155"
     server_access_port: 5000
     greeting: "hello from server!"
+
+  # motor:
+  #   name: "arduino_uno"
+  #   port_type: "serial"
+  #   serial_port: "COM3"
+  #   baud_rate: 9600
+  #   stepper_ratio: 200
+  #   timeout: 60
 
 radar_id:
   0: 
