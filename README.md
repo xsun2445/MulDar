@@ -32,7 +32,7 @@ Requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-nat
 
 ```bash
 docker build -t muldar .
-docker run --gpus all -it muldar
+docker run --gpus all -v $(pwd):/app -it muldar bash
 ```
 
 

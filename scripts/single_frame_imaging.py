@@ -122,6 +122,7 @@ def single_frame_imaging(folderName, lambda_mono=3, show_plot=False, dataName=''
     if saveFolder is not None:
         plt.savefig(os.path.join(saveFolder, f'{dataName}_all_sum.png'))
          # plt.show()
+        print(f"Saved images to {os.path.join(saveFolder, f'{dataName}_all_sum.png')}")
     if show_plot:
         plt.show()
 
@@ -129,4 +130,4 @@ def single_frame_imaging(folderName, lambda_mono=3, show_plot=False, dataName=''
 
 if __name__ == '__main__':
     folderName = './adcData/real_object/20251121_155913'
-    single_frame_imaging(folderName, show_plot=True)
+    single_frame_imaging(folderName, show_plot=False, dataName='20251121_155913', saveFolder='.')
