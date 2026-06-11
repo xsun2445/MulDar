@@ -16,6 +16,13 @@ RADAR_CONFIG_FILE_PATH = "hardware/radar/config_template.txt"
 # each receiving radar (including itself).
 # Hence the diagonal entries should be 0, and the non-diagonal entries should be >0.
 
+# increase the number and the received peak will go up, 
+# decrease the number and the received peak will go down.
+# adjust the numbers so that it shows a solid peak in the beamforming image. 
+# Normally there will be 2 peaks, one is the direct path between radars and the other is the reflecting object if it exists.
+
+# the diagonal entries should always be 0, since they are mono-static channels.
+
 radar_cfg_list = [
      {
         "RADAR_IDX": 0, # transmitting radar index

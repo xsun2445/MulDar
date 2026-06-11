@@ -7,9 +7,9 @@
 
 %% configs
 
-machineName = 'slave_6';
+machineName = 'slave_1';
 
-config_path = './configs/devices_comm_cfg.json';
+config_path = './devices_comm_cfg.json';
 devices_config = jsondecode(fileread(config_path)).comm_cfg;
 
 COMMAND_LENGTH = devices_config.COMMAND_LENGTH;

@@ -1,3 +1,7 @@
+BSS_PATH = "C:\\ti\\mmwave_studio_03_00_00_14\\rf_eval_firmware\\AWR2243_ES1_1\\radarss\\xwr22xx_radarss.bin"
+MSS_PATH = "C:\\ti\\mmwave_studio_03_00_00_14\\rf_eval_firmware\\AWR2243_ES1_1\\masterss\\xwr22xx_masterss.bin"
+COM_PORT = 3
+
 --Start
 WriteToLog("LUA Script for System Check\n", "blue")
 -- RSTD.Sleep(1000)

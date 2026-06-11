@@ -7,19 +7,6 @@ Multi-static COTS radar implementation built on TI AWR2243/1243BOOST and the DCA
   <img src="assets/shortvideo.gif" alt="MulDar Demo" width="75%">
 </p>
 
-## Hardware
-
-<p align="center">
-  <img src="assets/muldar_sys.png" alt="MulDar System" width="75%">
-</p>
-
-For best flexibility and most control over the radars, each radar are connected (USB cables) to a separate PC the runs TI mmWaveStudio (can't run multiple instants on a single machine). On those PCs, a MATLAB terminal is on for receiving radar commands (config radar, start frame, end frame) from the host computer, and it controls the TI mmWaveStudio following the official radar SDK. 
-
-A Raspberry Pi 4B is used for simultanously triggering the hardware trigger of radars. It use this repo: https://github.com/xsun2445/WiringPi-Python-MultiPin for simultanously triggering GPIOs which are connected to the hardware triggers of AWR2243BOOST, which is pin 9 SYNC_IN on J5 connector, [doc](https://www.ti.com/lit/ug/spruit8d/spruit8d.pdf?ts=1781137898809&ref_url=https%253A%252F%252Fwww.ti.com%252Ftool%252FAWR2243BOOST). Note: R62 need to be removed for enabling SYNC_IN on AWR2243/1243BOOST, detailed SYNC_IN signal requirements are in 5.5.3 of mmwave_dfp_02_02_04_00 mmWave-Radar-Interface-Control.pdf that can be downloaded from TI. 
-
-Each radar has a distinct ip for data and config port which can be configured using `scrips/config_dca_eeprom.py`. All radars, PCs, Raspberry Pi are connected to a single network switch used for communication and radar data transfering. Radar data from all 3 boards are streamed to the host computer and the host PC simultanously renders the scene for visualization.
-
-
 
 ## Installation
 
@@ -37,7 +24,7 @@ Each radar has a distinct ip for data and config port which can be configured us
 uv sync
 ```
 
-#### Using Docker
+#### Using Docker (only for result evaluations)
 
 Requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) for GPU access.
 
@@ -49,6 +36,45 @@ docker run --gpus all -v $(pwd):/app -it muldar bash
 
 This creates a virtual environment and installs all dependencies in one step. (Note: cupy may take longer time for installation)
 
+
+
+## Hardware
+
+<p align="center">
+  <img src="assets/muldar_sys.png" alt="MulDar System" width="75%">
+</p>
+
+### How To:
+
+For best flexibility and most control over the radars, each radar are connected (USB cables) to a separate PC the runs TI [mmWaveStudio](https://www.ti.com/tool/MMWAVE-STUDIO?utm_source=google&utm_medium=cpc&utm_campaign=epd-rap-null-58700008490712085_mmwave_studio_rsa-cpc-evm-google-ww_en_int&utm_content=mmwave_studio&ds_k=mmwave+studio&DCM=yes&gclsrc=aw.ds&gad_source=1&gad_campaignid=1757549268&gbraid=0AAAAAC068F2ATneWFn2fDkxtgO13YJrvh&gclid=Cj0KCQjwlqTRBhCBARIsANrkrxitKra_j--VQv9djisxuUGmAD2VMIUWTwZjYBHzWw9TbFeuovKM3kAaAhE5EALw_wcB) (version 03.00.00.14) since it can't run multiple instants on a single machine. Copy the `hardware/matlab` and `hardware/mmWaveStudio` folders to PCs, then run `connect_and_config.lua` in mmWaveStudio software. 
+
+On those PCs, run MATLAB script `studio_server.m` for receiving radar commands (config radar, start frame, end frame) from the host computer, and it controls the TI mmWaveStudio following the official radar SDK. 
+
+A Raspberry Pi 4B is used for simultanously triggering the hardware trigger of radars. It use this repo: https://github.com/xsun2445/WiringPi-Python-MultiPin for simultanously triggering GPIOs which are connected to the hardware triggers of AWR2243BOOST, which is pin 9 SYNC_IN on J5 connector, [doc](https://www.ti.com/lit/ug/spruit8d/spruit8d.pdf?ts=1781137898809&ref_url=https%253A%252F%252Fwww.ti.com%252Ftool%252FAWR2243BOOST). 
+
+Note: R62 need to be removed for enabling SYNC_IN on AWR2243/1243BOOST, detailed SYNC_IN signal requirements are in 5.5.3 of mmwave_dfp_02_02_04_00 mmWave-Radar-Interface-Control.pdf that can be downloaded from TI. 
+
+Each radar has a distinct ip for data and config port which can be configured using `scrips/config_dca_eeprom.py`. All radars, PCs, Raspberry Pi are connected to a single network switch used for communication and radar data transfering. Radar data from all 3 boards are streamed to the host computer and the host PC simultanously renders the scene for visualization.
+
+Measure the `[x,y,yaw]` coordinates of those radars and write in the `configs.yml`, no need to be super precise. 
+
+Then on host PC, run `scripts/radar_config.py`. It will config the starting frequency and transmitting/receiving for each of the radar through the MATLAB scripts on slave PCs. Run `play.py` with `visualize_2d_fft(mgr)`, it will show the beamforming images of all radar channels. Each colomn represents a transmitting antenna, each radar has 2 TX antennas so there will be 6 colomns in total. Each row represents a receiving radar, it shows a beamforming image using 4 RX antennas. Hence the diagonal beamforming images will always be stable since they are monostatic channels, but other images are bi-static channels which shows frequency offsets (the range profile will goes up and downs). 
+
+Adjust the starting frequency of bi-static channels, then config and visualize again untill it shows solid peaks in all channels.
+
+
+<div style="display: flex; gap: 1rem; justify-content: center;">
+  <div style="text-align: center;">
+    <img src="assets/2dfft_muldar_system_bad.gif" alt="Before calibration" width="95%" />
+    <p><em>initial config</em></p>
+  </div>
+  <div style="text-align: center;">
+    <img src="assets/2dfft_muldar_system_good.gif" alt="After calibration" width="95%" />
+    <p><em>after calibration</em></p>
+  </div>
+</div>
+
+Finally, run `play.py` with `start_visualization(mgr)` or `start_combined_visualization(mgr)`.
 
 ## Usage
 

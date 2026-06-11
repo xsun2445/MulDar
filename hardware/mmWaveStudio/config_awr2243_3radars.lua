@@ -1,6 +1,11 @@
+
+-- Radar Configs
+RADAR_IDX =         2
 -- sequence of tx radar
 tx_seq = {0,1,2}
 
+
+-- Chirp Profile Config
 IDEL_TIME =             15.0
 FREQ_SLOPE =            38.816929   -- MHz/us
 ADC_START_TIME =        7           -- us
@@ -17,17 +22,26 @@ PhaseShifter_TX3 = 0
 
 -- Bi-static chirp profile
 START_FREQ =            76.01       -- GHz
--- -- or use the triggering time difference (coarser)
--- t_delta =               0           -- us (currently always 0 for the different starting frequency)
+-- f_delta =               1.351         -- MHz 
+f_delta =               1.500         -- MHz for radar 2
+-- use the starting frequency difference (finer)
+START_FREQ_TX =         START_FREQ
+START_FREQ_RX =         START_FREQ + f_delta*1e-3
+-- or use the triggering time difference (coarser)
+t_delta =               0           -- us (currently always 0 for the different starting frequency)
 
 
-
-function bi_static_chirp_profile(profile_id, freq)
+function bi_static_chirp_profile(isTx, profile_id)
 --[[
 Configuring the chirp profile for bi-static radars
 isTx: true for transmitting and receiving, false for only receiving
 ]]--
-
+    local freq = 0
+    if isTx then
+        freq = START_FREQ_TX
+    else
+        freq = START_FREQ_RX
+    end
     -- Int32 ar1.ProfileConfig(UInt16 profileId, Single startFreqConst, Single idleTimeConst, Single adcStartTimeConst, Single rampEndTime, UInt32 tx0OutPowerBackoffCode, UInt32 tx1OutPowerBackoffCode, UInt32 tx2OutPowerBackoffCode, Single tx0PhaseShifter, Single tx1PhaseShifter, Single tx2PhaseShifter, Single freqSlopeConst, Single txStartTime, UInt16 numAdcSamples, UInt16 digOutSampleRate, UInt32 hpfCornerFreq1, UInt32 hpfCornerFreq2, Char rxGain) - Profile configuration API which defines chirp profile parameters
     -- _I_ UInt16	profileId	 - Chirp Profile Id [0 to 3]
     -- _I_ Single	startFreqConst	 - Chirp Start Frequency in GHz
@@ -72,23 +86,17 @@ isTx: true for transmitting and receiving, false for only receiving
     end
 end
 
-
 -- setting tx and rx profile
-start_freq = START_FREQ
-bi_static_chirp_profile(0, start_freq)
--- radar 0 redceiving from radar 1
-f_delta = 0.6  -- MHz
-start_freq = START_FREQ + f_delta*1e-3
-bi_static_chirp_profile(1, start_freq)
--- radar 0 redceiving from radar 2
-f_delta = 0.4  -- MHz
-start_freq = START_FREQ + f_delta*1e-3
-bi_static_chirp_profile(2, start_freq)
+-- tx profile id: 0
+tx_profile_id = 0
+bi_static_chirp_profile(true, tx_profile_id)
+-- rx profile id: 1
+rx_profile_id = 1
+bi_static_chirp_profile(false, rx_profile_id)
 
 
 -- Chirp sequence
 for i = 1,#tx_seq do
-    curr_profile_id = i-1
     curr_chirp_idx = 2*(i-1)
     -- -- Int32 ar1.ChirpConfig(UInt16 chirpStartIdx, UInt16 chirpEndIdx, UInt16 profileId, Single startFreqVar, Single freqSlopeVar, Single idleTimeVar, Single adcStartTimeVar, UInt16 tx0Enable, UInt16 tx1Enable, UInt16 tx2Enable) - Chirp configuration API which defines which profile is to be used for each chirp in a frame
     -- -- _I_ UInt16	chirpStartIdx	 - First Chirp Start Index number
@@ -102,11 +110,11 @@ for i = 1,#tx_seq do
     -- -- _I_ UInt16	tx1Enable	 - tx1 channel
     -- -- _I_ UInt16	tx2Enable	 - tx2 channel
     if tx_seq[i] == RADAR_IDX then
-        ar1.ChirpConfig(curr_chirp_idx,   curr_chirp_idx,   curr_profile_id, 0, 0, 0, 0, 1, 0, 0)
-        ar1.ChirpConfig(curr_chirp_idx+1, curr_chirp_idx+1, curr_profile_id, 0, 0, 0, 0, 0, 0, 1)
+        ar1.ChirpConfig(curr_chirp_idx,   curr_chirp_idx,   tx_profile_id, 0, 0, 0, 0, 1, 0, 0)
+        ar1.ChirpConfig(curr_chirp_idx+1, curr_chirp_idx+1, tx_profile_id, 0, 0, 0, 0, 0, 0, 1)
     else
-        ar1.ChirpConfig(curr_chirp_idx,   curr_chirp_idx,   curr_profile_id, 0, 0, 0, 0, 0, 0, 0)
-        ar1.ChirpConfig(curr_chirp_idx+1, curr_chirp_idx+1, curr_profile_id, 0, 0, 0, 0, 0, 0, 0)
+        ar1.ChirpConfig(curr_chirp_idx,   curr_chirp_idx,   rx_profile_id, 0, 0, 0, 0, 0, 0, 0)
+        ar1.ChirpConfig(curr_chirp_idx+1, curr_chirp_idx+1, rx_profile_id, 0, 0, 0, 0, 0, 0, 0)
     end
 end
 

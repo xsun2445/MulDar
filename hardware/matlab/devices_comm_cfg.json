@@ -1,0 +1,46 @@
+{
+  "comm_cfg": {
+    "COMMAND_LENGTH": 100,
+    "DELIMITER": "@$@$",
+    "MASTER_ACK_WAIT_TIME": 0.01,
+    "MASTER_NO_ACK_CNT_MAX": 500,
+    "CLIENT_MSG_WAIT_TIME": 0.01,
+    "CLIENT_RECONNECTION_TIME": 10,
+
+    "master": {
+      "name": "MASTERNAME",
+      "radar_name": "RH",
+      "port_type": "tcpip",
+      "IP": "192.168.33.30",
+      "server_access_port": 6000
+    },
+    "slave_1": {
+      "name": "SLAVE_NAME_1",
+      "radar_name": "radar_name_1",
+      "port_type": "tcpip",
+      "IP": "192.168.33.31",
+      "server_access_port": 5001
+    },
+    "slave_2": {
+      "name": "SLAVE_NAME_2",
+      "radar_name": "radar_name_2",
+      "port_type": "tcpip",
+      "IP": "192.168.33.32",
+      "server_access_port": 5002
+    },
+    "slave_3": {
+      "name": "SLAVE_NAME_3",
+      "radar_name": "radar_name_3",
+      "port_type": "tcpip",
+      "IP": "192.168.33.33",
+      "server_access_port": 5003
+    },
+    "trigger": {
+      "name": "raspberrypi",
+      "port_type": "tcpip",
+      "IP": "192.168.33.40",
+      "server_access_port": 5000,
+      "greeting": "hello from server!"
+    }
+  }
+}

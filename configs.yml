@@ -43,7 +43,6 @@ activated_radar:
     alpha: 0.5
     # from_record_file: ./adcData/eval_data/inthewild/table_video/20251205_034038/radar_2.bin 
     
-
 visual_cfg:
   nfft_range: 512
   nfft_angle: 63
