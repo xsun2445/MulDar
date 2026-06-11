@@ -63,16 +63,14 @@ Then on host PC, run `scripts/radar_config.py`. It will config the starting freq
 Adjust the starting frequency of bi-static channels, then config and visualize again untill it shows solid peaks in all channels.
 
 
-<div style="display: flex; gap: 1rem; justify-content: center;">
-  <div style="text-align: center;">
-    <img src="assets/2dfft_muldar_system_bad.gif" alt="Before calibration" width="95%" />
-    <p><em>initial config</em></p>
-  </div>
-  <div style="text-align: center;">
-    <img src="assets/2dfft_muldar_system_good.gif" alt="After calibration" width="95%" />
-    <p><em>after calibration</em></p>
-  </div>
-</div>
+<p align="center">
+  <img src="assets/2dfft_muldar_system_bad.gif" alt="Before calibration" width="48%" />
+  &nbsp;
+  <img src="assets/2dfft_muldar_system_good.gif" alt="After calibration" width="48%" />
+</p>
+<p align="center">
+  <em>initial config</em>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<em>after calibration</em>
+</p>
 
 Finally, run `play.py` with `start_visualization(mgr)` or `start_combined_visualization(mgr)`.
 
