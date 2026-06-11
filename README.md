@@ -9,8 +9,6 @@ Multi-static COTS radar implementation built on TI AWR2243/1243BOOST and the DCA
 
 ## Hardware
 
-TI AWR2243/1243BOOST, DCA1000EVM, Raspberry Pi (4B), PCs, 
-
 <p align="center">
   <img src="assets/muldar_sys.png" alt="MulDar System" width="75%">
 </p>
