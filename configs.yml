@@ -22,28 +22,27 @@ activated_radar:
     pose: [0.7285, 0.3531, 135.3847]  # x, y, yaw (only considering 2D pose)
     cmap: Reds
     alpha: 0.5
-    from_record_file: C:/Workspace/2025_polysight/mmWave_SAR_collection/adcData/eval_data/inthewild/table_video/20251205_034038/radar_0.bin
-    # from_record_file: ./adcData/20251112_145709/radar_0.bin
+    # # optional to switch to recorded data for visualization
+    # from_record_file: ./adcData/eval_data/inthewild/table_video/20251205_034038/radar_0.bin
+    
   - idx: 1
     name: left
     mono_chirp_idx: [2,3]
     client_name: slave_6
     pose: [0.0, 0.0, 90]
-    # pose: [ -0.7520,   0.1989,  38.5609]
     cmap: Greens
     alpha: 0.5
-    from_record_file: C:/Workspace/2025_polysight/mmWave_SAR_collection/adcData/eval_data/inthewild/table_video/20251205_034038/radar_1.bin
-    # from_record_file: ./adcData/20251112_145709/radar_1.bin
+    # from_record_file: ./adcData/eval_data/inthewild/table_video/20251205_034038/radar_1.bin
+    
   - idx: 2
     name: right
     mono_chirp_idx: [4,5]
     client_name: slave_4
     pose: [-0.6939, 0.2795, 44.5802]
-    # pose: [  0.7368,   0.4863, 155.6009]
     cmap: Blues
     alpha: 0.5
-    from_record_file: C:/Workspace/2025_polysight/mmWave_SAR_collection/adcData/eval_data/inthewild/table_video/20251205_034038/radar_2.bin
-    # from_record_file: ./adcData/20251112_145709/radar_2.bin
+    # from_record_file: ./adcData/eval_data/inthewild/table_video/20251205_034038/radar_2.bin 
+    
 
 visual_cfg:
   nfft_range: 512
@@ -73,34 +72,34 @@ comm_cfg:
     name: "MASTERNAME"
     radar_name: "RH"
     port_type: "tcpip"
-    IP: "192.168.50.83"
-    server_access_port: 5004
+    IP: "192.168.33.30"
+    server_access_port: 6000
 
-  slave_4:
-    name: "NEWTLAB_LAPTOP_lp2"
-    radar_name: "radar0"
+  slave_1:
+    name: "SLAVE_NAME_1"
+    radar_name: "radar_name_1"
     port_type: "tcpip"
-    IP: "192.168.50.56"
-    server_access_port: 5005
+    IP: "192.168.33.31"
+    server_access_port: 5001
 
-  slave_5:
-    name: "NewtLabDell1"
-    radar_name: "radar1"
+  slave_2:
+    name: "SLAVE_NAME_2"
+    radar_name: "radar_name_2"
     port_type: "tcpip"
-    IP: "192.168.50.108"
-    server_access_port: 5006
+    IP: "192.168.33.32"
+    server_access_port: 5002
 
-  slave_6:
-    name: "NucBox_M6"
-    radar_name: "radar2"
+  slave_3:
+    name: "SLAVE_NAME_3"
+    radar_name: "radar_name_3"
     port_type: "tcpip"
-    IP: "192.168.50.111"
-    server_access_port: 5007
+    IP: "192.168.33.33"
+    server_access_port: 5003
 
   trigger:
     name: "raspberrypi"
     port_type: "tcpip"
-    IP: "192.168.50.155"
+    IP: "192.168.33.40"
     server_access_port: 5000
     greeting: "hello from server!"
 
