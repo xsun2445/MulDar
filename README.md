@@ -1,12 +1,25 @@
-# MulDar
+<h1 align="center">MulDar<br><sub>Unleashing the Potential of Distributed COTS mmWave Radar by Exploiting Cross-Device Channels</sub></h1>
+<p align="center"><i>MobiSys 2026</i></p>
 
-Multi-static COTS radar implementation with TI AWR2243/1243BOOST
+Multi-static COTS radar implementation built on TI AWR2243/1243BOOST and the DCA1000EVM, enabling distributed multi-view sensing and coherent processing across multiple radar nodes.
+
+<p align="center">
+  <img src="assets/shortvideo.gif" alt="MulDar Demo" width="75%">
+</p>
 
 ## Hardware
 
-TI AWR2243/1243BOOST, DCA1000EVM
+TI AWR2243/1243BOOST, DCA1000EVM, Raspberry Pi (4B), PCs, 
 
-![MulDar System](assets/muldar_sys.png)
+<p align="center">
+  <img src="assets/muldar_sys.png" alt="MulDar System" width="75%">
+</p>
+
+For best flexibility and most control over the radars, each radar are connected (USB cables) to a separate PC the runs TI mmWaveStudio (can't run multiple instants on a single machine). On those PCs, a MATLAB terminal is on for receiving radar commands (config radar, start frame, end frame) from the host computer, and it controls the TI mmWaveStudio following the official radar SDK. 
+
+A Raspberry Pi 4B is used for simultanously triggering the hardware trigger of radars. It use this repo: https://github.com/xsun2445/WiringPi-Python-MultiPin for simultanously triggering GPIOs which are connected to the hardware triggers of AWR2243BOOST, which is pin 9 SYNC_IN on J5 connector, [doc](https://www.ti.com/lit/ug/spruit8d/spruit8d.pdf?ts=1781137898809&ref_url=https%253A%252F%252Fwww.ti.com%252Ftool%252FAWR2243BOOST). Note: R62 need to be removed for enabling SYNC_IN on AWR2243/1243BOOST, detailed SYNC_IN signal requirements are in 5.5.3 of mmwave_dfp_02_02_04_00 mmWave-Radar-Interface-Control.pdf that can be downloaded from TI. 
+
+Each radar has a distinct ip for data and config port which can be configured using `scrips/config_dca_eeprom.py`. All radars, PCs, Raspberry Pi are connected to a single network switch used for communication and radar data transfering. Radar data from all 3 boards are streamed to the host computer and the host PC simultanously renders the scene for visualization.
 
 
 
@@ -74,10 +87,19 @@ For more evaluations please refer to [evaluations/README.md](evaluations/README.
 
 ## Cite
 
-Consider cite our mobisys paper!
+If you find MulDar useful, please consider citing our MobiSys paper:
 
-```tex
-coming soon.
+```bibtex
+@inproceedings{sun2026muldar,
+  author    = {Sun, Xinghua and Li, Qiancheng and Gadre, Akshay},
+  title     = {MulDar: Unleashing the Potential of Distributed COTS mmWave Radar by Exploiting Cross-Device Channels},
+  booktitle = {Proceedings of the 24th Annual International Conference on Mobile Systems, Applications and Services (MobiSys '26)},
+  year      = {2026},
+  doi       = {10.1145/3745756.3809206},
+  publisher = {ACM},
+  address   = {New York, NY, USA},
+  month     = {June},
+}
 ```
 
 
