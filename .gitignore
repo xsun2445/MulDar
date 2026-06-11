@@ -27,6 +27,7 @@ evaluations/chamfer/img_results/
 evaluations/chamfer/chamfer_results/
 evaluations/car/out/
 evaluations/common_objects/images/
+.venv-win/
 evaluations/uncalibrated/
 evaluations/chamfers_uncalibrated/
 .gitattributes

@@ -244,6 +244,298 @@ def visualize_waveform(mgr):
     return fig, axs
 
 
+def visualize_waveform_clean(mgr, save_gif=False, gif_path="waveform.gif", gif_frames=50, gif_fps=10, figsize=None, dpi=100, configs=None):
+    """
+    Realtime FFT of IF signals — no tick values, only axis labels
+    (Amplitude / IF Frequency).
+
+    Args:
+        save_gif: If True, save the animation as a GIF.
+        gif_path: Output GIF file path.
+        gif_frames: Number of frames to capture for the GIF.
+        gif_fps: Frames per second in the saved GIF.
+        configs: List of config indices to display. None = all configs.
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from matplotlib.animation import FuncAnimation
+
+    n_radars = len(mgr.radars)
+    n_cfg = mgr.params['chirp_cfg']['num_config']
+    num_ch = int(mgr.params['chirp_cfg']['num_ch'])
+    nfft = 1024
+    plot_cfgs = configs if configs is not None else list(range(n_cfg))
+    n_plot_cfg = len(plot_cfgs)
+
+    if figsize is None:
+        figsize = (4 + 3 * n_plot_cfg, 3 + 2 * n_radars)
+    fig, axs = plt.subplots(
+        n_radars, n_plot_cfg, figsize=figsize, squeeze=False
+    )
+    plt.subplots_adjust(hspace=0.35, wspace=0.25)
+    fig.suptitle("Realtime Waveform FFT per Radar/Config", fontsize=16)
+
+    lines = [[None for _ in range(n_plot_cfg)] for _ in range(n_radars)]
+    x = np.arange(nfft)
+
+    for i in range(n_radars):
+        for col, cfg_idx in enumerate(plot_cfgs):
+            ax = axs[i, col]
+            lns = [ax.plot(x, np.zeros(nfft), lw=1)[0] for _ in range(num_ch)]
+            ax.set_title(f"Radar {i} | Cfg {cfg_idx}")
+            ax.set_xlabel("IF Frequency")
+            ax.set_ylabel("Amplitude")
+            ax.set_xticklabels([])
+            ax.set_yticklabels([])
+            ax.tick_params(axis='both', length=0)
+            ax.set_xlim(0, nfft - 1)
+            ax.set_ylim(0, 1)
+            lines[i][col] = lns
+
+    def update(_):
+        artists = []
+        for i, rs in enumerate(mgr.radars):
+            data = rs.get_latest()
+            if data is None:
+                continue
+            for col, cfg_idx in enumerate(plot_cfgs):
+                try:
+                    wave = data[:, -1, cfg_idx, :]
+                    fft_mag = np.abs(np.fft.fft(wave[:, 16:-96], n=nfft, axis=-1))
+
+                    for ch, ln in enumerate(lines[i][col]):
+                        ln.set_ydata(fft_mag[ch])
+                        artists.append(ln)
+
+                    ax = axs[i, col]
+                    ax.set_ylim(0, max(1e-6, float(fft_mag.max())) * 1.1)
+                    ax.set_xlim(0, nfft - 1)
+                    ax.set_xticklabels([])
+                    ax.set_yticklabels([])
+                except Exception as e:
+                    print("error in visualization:", e)
+                    continue
+        return artists
+
+    captured_frames = []
+
+    def update_and_capture(frame_num):
+        artists = update(frame_num)
+        if save_gif and len(captured_frames) < gif_frames:
+            fig.canvas.draw()
+            captured_frames.append(np.array(fig.canvas.buffer_rgba()).copy())
+        return artists
+
+    ani = FuncAnimation(fig, update_and_capture, interval=mgr.params['period_frame'], blit=False, cache_frame_data=False)
+    plt.show(block=True)
+
+    if save_gif and captured_frames:
+        from PIL import Image
+        pil_frames = [Image.fromarray(f) for f in captured_frames]
+        pil_frames[0].save(gif_path, save_all=True, append_images=pil_frames[1:],
+                           loop=0, duration=int(1000 / gif_fps))
+        print(f"GIF saved to {gif_path} ({len(captured_frames)} frames)")
+
+    return fig, axs
+
+
+def visualize_waveform_synced(mgr, save_gif=False, gif_path="waveform_synced.gif", gif_frames=50, gif_fps=10,
+                              figsize=None, dpi=100, configs=None,
+                              save_coherent_avg=False, coherent_avg_path="coherent_avg.png"):
+    """
+    Realtime FFT of IF signals after reference-path synchronization.
+    Uses bistatic.sync_signal logic: beamform towards TX, find reference peak,
+    then frequency/phase-shift all channels to align.
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from matplotlib.animation import FuncAnimation
+    import muldar.dsp.dsp as dsp_mod
+
+    n_radars = len(mgr.radars)
+    n_cfg = mgr.params['chirp_cfg']['num_config']
+    num_ch = int(mgr.params['chirp_cfg']['num_ch'])
+    nfft = 1024
+    plot_cfgs = configs if configs is not None else list(range(n_cfg))
+    n_plot_cfg = len(plot_cfgs)
+
+    align_params = {
+        'nfft': 1024,
+        'f_tar_idx': 256,
+        'phase_ref': 0.0,
+        'min_height_ratio': 0.7,
+        'min_prominence_ratio': 0.5,
+    }
+
+    # Build TX-config mapping from radar_network (all radars, not just activated)
+    network = mgr.params.get('radar_network', mgr.params['activated_radar'])
+    network_poses = {int(r['idx']): np.array(r['pose']) for r in network}
+    # Map config -> TX radar idx via mono_chirp_idx
+    cfg_to_tx = {}
+    for r in network:
+        for c in r.get('mono_chirp_idx', []):
+            cfg_to_tx[int(c)] = int(r['idx'])
+    # Map mgr.radars index -> radar idx in network
+    active_idx_map = {}
+    for i, r in enumerate(mgr.params['activated_radar']):
+        active_idx_map[i] = int(r['idx'])
+
+    def get_ref_angle(rx_mgr_idx, cfg_idx):
+        """Compute steering angle from RX toward TX for a given config."""
+        tx_radar_idx = cfg_to_tx.get(cfg_idx)
+        if tx_radar_idx is None:
+            return None
+        rx_radar_idx = active_idx_map.get(rx_mgr_idx)
+        if rx_radar_idx is None or tx_radar_idx == rx_radar_idx:
+            return None  # monostatic, no sync needed
+        rx_pose = network_poses[rx_radar_idx]
+        tx_pose = network_poses[tx_radar_idx]
+        ref_ang = np.deg2rad(rx_pose[2]) - np.arctan2(
+            tx_pose[1] - rx_pose[1],
+            tx_pose[0] - rx_pose[0]
+        )
+        return ref_ang
+
+    if figsize is None:
+        figsize = (4 + 3 * n_plot_cfg, 3 + 2 * n_radars)
+    fig, axs = plt.subplots(
+        n_radars, n_plot_cfg, figsize=figsize, squeeze=False
+    )
+    plt.subplots_adjust(hspace=0.35, wspace=0.25)
+    fig.suptitle("Synced Waveform FFT per Radar/Config", fontsize=16)
+
+    lines = [[None for _ in range(n_plot_cfg)] for _ in range(n_radars)]
+    x = np.arange(nfft)
+
+    for i in range(n_radars):
+        for col, cfg_idx in enumerate(plot_cfgs):
+            ax = axs[i, col]
+            lns = [ax.plot(x, np.zeros(nfft), lw=1)[0] for _ in range(num_ch)]
+            ax.set_title(f"Radar {i} | Cfg {cfg_idx}")
+            ax.set_xlabel("IF Frequency")
+            ax.set_ylabel("Amplitude")
+            ax.set_xticklabels([])
+            ax.set_yticklabels([])
+            ax.tick_params(axis='both', length=0)
+            ax.set_xlim(0, nfft - 1)
+            ax.set_ylim(0, 1)
+            lines[i][col] = lns
+
+    # Buffer for coherent averaging: dict keyed by (radar_mgr_idx, col) -> list of complex arrays
+    coherent_buffer = {}
+    coherent_frame_count = [0]  # mutable counter
+
+    def sync_frame(wave, ref_ang):
+        """Sync a single frame (num_ch, num_adc) using reference path."""
+        chirp = wave[:, 16:-96]
+        steering_vec = np.exp(-1j * np.pi * np.sin(ref_ang) * np.arange(chirp.shape[0]))[None, :]
+        ref_sig = steering_vec @ chirp  # (1, num_adc_cropped)
+        df, da = dsp_mod.find_ref_frq_first_peak(ref_sig, **align_params)
+        # Apply shift to each channel
+        n_samp = chirp.shape[-1]
+        shift = np.exp(1j * (2 * np.pi * df * np.arange(n_samp) + da))
+        return chirp * shift[None, :]
+
+    def update(_):
+        artists = []
+        for i, rs in enumerate(mgr.radars):
+            data = rs.get_latest()
+            if data is None:
+                continue
+            for col, cfg_idx in enumerate(plot_cfgs):
+                try:
+                    wave = data[:, -1, cfg_idx, :]  # (num_ch, num_adc)
+                    ref_ang = get_ref_angle(i, cfg_idx)
+                    if ref_ang is not None:
+                        synced = sync_frame(wave, ref_ang)
+                    else:
+                        synced = wave[:, 16:-96]
+
+                    # Accumulate for coherent averaging
+                    if save_coherent_avg and coherent_frame_count[0] < gif_frames:
+                        key = (i, col)
+                        if key not in coherent_buffer:
+                            coherent_buffer[key] = []
+                        coherent_buffer[key].append(synced.copy())
+
+                    fft_mag = np.abs(np.fft.fft(synced, n=nfft, axis=-1))
+
+                    for ch, ln in enumerate(lines[i][col]):
+                        ln.set_ydata(fft_mag[ch])
+                        artists.append(ln)
+
+                    ax = axs[i, col]
+                    ax.set_ylim(0, max(1e-6, float(fft_mag.max())) * 1.1)
+                    ax.set_xlim(0, nfft - 1)
+                    ax.set_xticklabels([])
+                    ax.set_yticklabels([])
+                except Exception as e:
+                    print("error in synced visualization:", e)
+                    continue
+        return artists
+
+    captured_frames = []
+
+    def update_and_capture(frame_num):
+        artists = update(frame_num)
+        if save_gif and len(captured_frames) < gif_frames:
+            fig.canvas.draw()
+            captured_frames.append(np.array(fig.canvas.buffer_rgba()).copy())
+        if save_coherent_avg and coherent_frame_count[0] < gif_frames:
+            coherent_frame_count[0] += 1
+        return artists
+
+    ani = FuncAnimation(fig, update_and_capture, interval=mgr.params['period_frame'], blit=False, cache_frame_data=False)
+    plt.show(block=True)
+
+    if save_gif and captured_frames:
+        from PIL import Image
+        pil_frames = [Image.fromarray(f) for f in captured_frames]
+        pil_frames[0].save(gif_path, save_all=True, append_images=pil_frames[1:],
+                           loop=0, duration=int(1000 / gif_fps))
+        print(f"GIF saved to {gif_path} ({len(captured_frames)} frames)")
+
+    # Save coherent average as static plot
+    if save_coherent_avg and coherent_buffer:
+        fig_ca, axs_ca = plt.subplots(
+            n_radars, n_plot_cfg, figsize=figsize, squeeze=False
+        )
+        plt.subplots_adjust(hspace=0.35, wspace=0.25)
+        n_frames_used = 0
+        for i in range(n_radars):
+            for col, cfg_idx in enumerate(plot_cfgs):
+                ax = axs_ca[i, col]
+                key = (i, col)
+                if key in coherent_buffer and len(coherent_buffer[key]) > 0:
+                    frames_complex = np.array(coherent_buffer[key])  # (N, num_ch, num_adc_cropped)
+                    n_frames_used = frames_complex.shape[0]
+                    # Channel 0 coherent average
+                    avg_ch0 = np.mean(frames_complex[:, 0, :], axis=0)  # (num_adc_cropped,)
+                    fft_ch0 = np.abs(np.fft.fft(avg_ch0, n=nfft))
+                    ax.plot(np.arange(nfft), fft_ch0, lw=1, color='gray', label='Ch 0')
+                    # All-channel coherent average
+                    avg_complex = np.mean(frames_complex, axis=0)  # (num_ch, num_adc_cropped)
+                    avg_complex = np.mean(avg_complex, axis=0)  # (num_adc_cropped,)
+                    fft_mag = np.abs(np.fft.fft(avg_complex, n=nfft))
+                    ax.plot(np.arange(nfft), fft_mag, lw=2, color='black', label='Avg')
+                    ax.legend(fontsize=8)
+                    ymax = max(float(fft_mag.max()), float(fft_ch0.max()))
+                    ax.set_ylim(0, max(1e-6, ymax) * 1.1)
+                    ax.set_xlim(0, nfft - 1)
+                ax.set_title(f"Radar {i} | Cfg {cfg_idx}")
+                ax.set_xlabel("IF Frequency")
+                ax.set_ylabel("Amplitude")
+                ax.set_xticklabels([])
+                ax.set_yticklabels([])
+                ax.tick_params(axis='both', length=0)
+        fig_ca.suptitle(f"Coherent Average ({n_frames_used} frames)", fontsize=16)
+        fig_ca.savefig(coherent_avg_path, dpi=dpi, bbox_inches='tight')
+        plt.close(fig_ca)
+        print(f"Coherent average saved to {coherent_avg_path} ({n_frames_used} frames)")
+
+    return fig, axs
+
+
 def visualize_2d_fft(mgr, nfft_range=256, nfft_angle=128):
     """
     Visualize the 2D FFT (range-angle) of the received signals for each radar and config.
@@ -322,6 +614,94 @@ def visualize_2d_fft(mgr, nfft_range=256, nfft_angle=128):
     plt.show(block=True)
     return fig, axs
 
+
+
+def visualize_2d_fft_clean(mgr, nfft_range=256, nfft_angle=128,
+                           save_gif=False, gif_path="2d_fft.gif", gif_frames=50, gif_fps=10,
+                           figsize=None, dpi=100, configs=None):
+    """
+    Realtime 2D FFT (Range-Angle) — no tick values, only axis labels.
+    Supports config filtering and GIF saving with live display.
+    """
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from matplotlib.animation import FuncAnimation
+
+    n_radars = len(mgr.radars)
+    n_cfg = mgr.params['chirp_cfg']['num_config']
+    plot_cfgs = configs if configs is not None else list(range(n_cfg))
+    n_plot_cfg = len(plot_cfgs)
+
+    r_res = mgr.params['ramp_cfg']['Fs'] * 3e8 / (2 * nfft_range * mgr.params['ramp_cfg']['slope'])
+
+    if figsize is None:
+        figsize = (4 + 3 * n_plot_cfg, 3 + 2 * n_radars)
+    fig, axs = plt.subplots(
+        n_radars, n_plot_cfg, figsize=figsize, squeeze=False
+    )
+    plt.subplots_adjust(hspace=0.35, wspace=0.25)
+    fig.suptitle("Realtime 2D FFT (Range-Angle) per Radar/Config", fontsize=16)
+
+    images = [[None for _ in range(n_plot_cfg)] for _ in range(n_radars)]
+
+    for i in range(n_radars):
+        for col, cfg_idx in enumerate(plot_cfgs):
+            ax = axs[i, col]
+            img = ax.imshow(np.zeros((nfft_angle, nfft_range)).T,
+                            origin='lower', aspect='auto',
+                            extent=[0, nfft_angle - 1, 0, (nfft_range - 1) * r_res],
+                            vmin=0, vmax=1)
+            ax.set_title(f"Radar {i} | Cfg {cfg_idx}")
+            ax.set_ylabel("Range")
+            ax.set_xlabel("Angle")
+            ax.set_xticklabels([])
+            ax.set_yticklabels([])
+            ax.tick_params(axis='both', length=0)
+            images[i][col] = img
+
+    def update(_):
+        artists = []
+        for i, rs in enumerate(mgr.radars):
+            data = rs.get_latest()
+            if data is None:
+                continue
+            for col, cfg_idx in enumerate(plot_cfgs):
+                try:
+                    wave = data[:, -1, cfg_idx, :]
+                    crop_wave = wave[:, 16:-96] if wave.shape[-1] > (16 + 96) else wave
+
+                    mag = np.abs(np.fft.fft2(crop_wave, s=(nfft_angle, nfft_range)))
+                    mag = np.fft.fftshift(mag, axes=0)
+
+                    img = images[i][col]
+                    img.set_data(mag.T)
+                    img.set_clim(vmin=0, vmax=float(mag.max()) * 1.1 if mag.max() > 1e-6 else 1)
+                    artists.append(img)
+                except Exception as e:
+                    print("error in 2D FFT visualization:", e)
+                    continue
+        return artists
+
+    captured_frames = []
+
+    def update_and_capture(frame_num):
+        artists = update(frame_num)
+        if save_gif and len(captured_frames) < gif_frames:
+            fig.canvas.draw()
+            captured_frames.append(np.array(fig.canvas.buffer_rgba()).copy())
+        return artists
+
+    ani = FuncAnimation(fig, update_and_capture, interval=mgr.params['period_frame'], blit=False, cache_frame_data=False)
+    plt.show(block=True)
+
+    if save_gif and captured_frames:
+        from PIL import Image
+        pil_frames = [Image.fromarray(f) for f in captured_frames]
+        pil_frames[0].save(gif_path, save_all=True, append_images=pil_frames[1:],
+                           loop=0, duration=int(1000 / gif_fps))
+        print(f"GIF saved to {gif_path} ({len(captured_frames)} frames)")
+
+    return fig, axs
 
 
 def visualize_angle_range_polar(angle_range_mag, angles_rad, ranges_m,
